@@ -136,9 +136,9 @@ int main() {
 
     }
 
-//    run_test("SUBTRACT", TestVoxels8_Subtract, TestVoxelsPacked_Subtract, size, iterations);
-//    run_test("DILATE", TestVoxels8_Dilate, TestVoxelsPacked_Dilate, size, iterations);
-//    run_test("ISEQUAL", TestVoxels8_IsEqual, TestVoxelsPacked_IsEqual, size, iterations);
+    run_test("SUBTRACT", TestVoxels8_Subtract, TestVoxelsPacked_Subtract, size, iterations);
+    run_test("DILATE", TestVoxels8_Dilate, TestVoxelsPacked_Dilate, size, iterations);
+    run_test("ISEQUAL", TestVoxels8_IsEqual, TestVoxelsPacked_IsEqual, size, iterations);
     run_test("GETBOUNDINGRANGEANDCOUNT", TestVoxels8_GetBoundingRangeAndCount, TestVoxelsPacked_GetBoundingRangeAndCount, size, iterations);
 
     return 0;
