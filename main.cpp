@@ -96,7 +96,7 @@ double TestVoxelsPacked_GetBoundingRangeAndCount(int size, int iterations) {
     VoxelsPacked a(size, size, size);
     Timer timer;
 
-    a.set(10x1, 1, 2, 1);
+    a.set(1, 1, 2, 1);
     a.set(4, 2, 1, 1);
 
     for (int i=0; i< iterations; i++) {
