@@ -5,6 +5,9 @@
 #include "Voxels8.h"
 //#include "VoxelsLong.h"
 #include "VoxelsPacked.h"
+#include "VoxelsBitsetSlow.h"
+#include "VoxelsBitsetFast.h"
+#include "VoxelsVecSlow.h"
 
 double TestVoxels8_Subtract(int size, int iterations) {
     Voxels8 a(size, size, size);
@@ -105,6 +108,45 @@ double TestVoxelsPacked_GetBoundingRangeAndCount(int size, int iterations) {
     return timer.elapsed();
 }
 
+//////////
+
+double TestVoxelsBitsetSlow_Subtract(int size, int iterations) {
+    VoxelsBitsetSlow a(size, size, size);
+    VoxelsBitsetSlow b(size, size, size);
+    Timer timer;
+
+    for (int i=0; i< iterations; i++) {
+        a.subtract(b);
+    }
+    return timer.elapsed();
+}
+
+//////////
+
+double TestVoxelsBitsetFast_Subtract(int size, int iterations) {
+    VoxelsBitsetFast a(size, size, size);
+    VoxelsBitsetFast b(size, size, size);
+    Timer timer;
+
+    for (int i=0; i< iterations; i++) {
+        a.subtract(b);
+    }
+    return timer.elapsed();
+}
+
+//////////
+
+double TestVoxelsVecSlow_Subtract(int size, int iterations) {
+    VoxelsVecSlow a(size, size, size);
+    VoxelsVecSlow b(size, size, size);
+    Timer timer;
+
+    for (int i=0; i< iterations; i++) {
+        a.subtract(b);
+    }
+    return timer.elapsed();
+}
+
 
 void run_test(const std::string message, double (*func1)(int, int), double (*func2)(int, int), int size, int iterations) {
     double voxels_8 = func1(size, iterations);
@@ -117,29 +159,52 @@ void run_test(const std::string message, double (*func1)(int, int), double (*fun
 }
 
 int main() {
-    int size = 64;
-    int iterations = 1;
+    int size = 256;
+    int iterations = 10;
 
 
     std::cout << "COMPARE" << std::endl;
     {
         Voxels8 voxels_8(size, size, size);
         VoxelsPacked voxels_packed(size, size, size);
+        VoxelsBitsetSlow voxels_bitset_slow(size, size, size);
+        VoxelsBitsetFast voxels_bitset_fast(size, size, size);
 
-        voxels_8.set(1, 1, 1, 1);
-        voxels_packed.set(1, 1, 1, 1);
+        for (unsigned int p = 0; p < size; p++) {
+            for (unsigned int c = 0; c < size; c++) {
+                for (unsigned int r = 0; r < size; r++) {
+                    int val = p + c + r;
+                    voxels_8.set(r, c, p,  static_cast<unsigned char>(val % 3));
+                    voxels_packed.set(r, c, p, static_cast<unsigned char>(val % 3));
+                    voxels_bitset_slow.set(r, c, p, static_cast<unsigned char>(val % 3));
+                }
+            }
+        }
         std::cout << "TestVoxels8: " << voxels_8.getCount() << std::endl;
         std::cout << "TestVoxelsPacked: " << voxels_packed.getCount() << std::endl;
         std::cout << "Voxels8 bytes: " << voxels_8.bytes() << std::endl;
         std::cout << "VoxelsPacked bytes: " << voxels_packed.bytes() << std::endl;
         std::cout << "TestVoxelsPacked bits per word: " << voxels_packed.bitsPerWord() << std::endl;
+        std::cout << "VoxelsBitSet size: " << voxels_bitset_fast.bitsetSize() << std::endl;
+        std::cout << "VoxelsBitSet block: " << voxels_bitset_fast.bitsetBlock() << std::endl;
 
     }
 
+    std::cout << "*PACKED*" << std::endl;
     run_test("SUBTRACT", TestVoxels8_Subtract, TestVoxelsPacked_Subtract, size, iterations);
     run_test("DILATE", TestVoxels8_Dilate, TestVoxelsPacked_Dilate, size, iterations);
     run_test("ISEQUAL", TestVoxels8_IsEqual, TestVoxelsPacked_IsEqual, size, iterations);
     run_test("GETBOUNDINGRANGEANDCOUNT", TestVoxels8_GetBoundingRangeAndCount, TestVoxelsPacked_GetBoundingRangeAndCount, size, iterations);
+
+
+    std::cout << std::endl << "*BITSET_SLOW*" << std::endl;
+    run_test("SUBTRACT", TestVoxels8_Subtract, TestVoxelsBitsetSlow_Subtract, size, iterations);
+
+    std::cout << std::endl << "*BITSET_FAST*" << std::endl;
+    run_test("SUBTRACT", TestVoxels8_Subtract, TestVoxelsBitsetFast_Subtract, size, iterations);
+
+    std::cout << std::endl << "*VECTOR_SLOW*" << std::endl;
+    run_test("SUBTRACT", TestVoxels8_Subtract, TestVoxelsVecSlow_Subtract, size, iterations);
 
     return 0;
 }

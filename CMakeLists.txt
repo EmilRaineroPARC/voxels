@@ -3,4 +3,4 @@ project(voxels)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(voxels main.cpp Timer.h Voxels8.h VoxelsLong.h VoxelsPacked.h)
+add_executable(voxels main.cpp Timer.h Voxels8.h VoxelsLong.h VoxelsPacked.h VoxelsBitsetSlow.h VoxelsBitsetFast.h VoxelsVecSlow.h)
