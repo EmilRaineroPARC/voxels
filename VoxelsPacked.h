@@ -143,7 +143,7 @@ public:
         for (unsigned int i = 0; i < size; i++) {
             WORD data1 = *v1;
             if (data1 > 0)
-                *v0 &= !(data1);
+                *v0 &= ~data1;
             v0++;
             v1++;
         }
