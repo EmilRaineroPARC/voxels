@@ -8,6 +8,7 @@
 #include "VoxelsBitsetSlow.h"
 #include "VoxelsBitsetFast.h"
 #include "VoxelsVecSlow.h"
+#include "VoxelCore.h"
 
 double TestVoxels8_Subtract(int size, int iterations) {
     Voxels8 a(size, size, size);
@@ -147,6 +148,28 @@ double TestVoxelsVecSlow_Subtract(int size, int iterations) {
     return timer.elapsed();
 }
 
+double TestVoxelCore_Subtract(int size, int iterations) {
+    VoxelCore a(size, size, size);
+    VoxelCore b(size, size, size);
+    Timer timer;
+
+    for (int i=0; i< iterations; i++) {
+        a.subtract(b);
+    }
+    return timer.elapsed();
+}
+
+double TestVoxelCore_SlowSubtract(int size, int iterations) {
+    VoxelCore a(size, size, size);
+    VoxelCore b(size, size, size);
+    Timer timer;
+
+    for (int i=0; i< a.size(); i++) {
+        a.setVoxel(i, a[i] & !b[i]);
+    }
+    return timer.elapsed();
+}
+
 
 void run_test(const std::string message, double (*func1)(int, int), double (*func2)(int, int), int size, int iterations) {
     double voxels_8 = func1(size, iterations);
@@ -205,6 +228,10 @@ int main() {
 
     std::cout << std::endl << "*VECTOR_SLOW*" << std::endl;
     run_test("SUBTRACT", TestVoxels8_Subtract, TestVoxelsVecSlow_Subtract, size, iterations);
+
+    std::cout << std::endl << "*VOXEL_CORE*" << std::endl;
+    run_test("SLOW_SUBTRACT", TestVoxels8_Subtract, TestVoxelCore_SlowSubtract, size, iterations);
+    run_test("SUBTRACT", TestVoxels8_Subtract, TestVoxelCore_Subtract, size, iterations);
 
     return 0;
 }
