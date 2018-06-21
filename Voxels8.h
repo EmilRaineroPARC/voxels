@@ -56,6 +56,10 @@ public:
         voxels[x * (rows * cols) + y * cols + z] = value > 0;
     }
 
+    void setVoxel(unsigned int i, unsigned char value) {
+        voxels[i] = value;
+    }
+
     void subtract(const Voxels8& other) {
         unsigned char* v0 = voxels;
         unsigned char* v1 = other.voxels;

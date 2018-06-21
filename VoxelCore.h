@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------
-// File: VoxelVolume.h
+// File: VoxelCore.h
 // Date: 2018-
 // Description:
 // Author: PARC
@@ -13,30 +13,34 @@
 #include <utility>
 #include <tuple>
 
+//#include "Eigen/StdVector"
+
 using BlockType = uint64_t; // holds 64 voxels
 
 class VoxelCore {
 private:
-    unsigned int xDim, yDim, zDim;
-    unsigned int bitsPerBlock;
-    unsigned int numXBlocks;
-    unsigned long long sizeInBlocks;
+    const unsigned int m_xDim, m_yDim, m_zDim;
+    const unsigned int m_bitsPerBlock;
+    const unsigned int m_numBlocksInXDim;
+    const unsigned int m_sizeInBlocks;
 
-    BlockType* voxelArray;
-
-    mutable unsigned long long cachedCount;
-    mutable bool cachedCountIsValid;
+    BlockType* m_voxelArray;
 
     // these are only accurate after a call to getBoundingRangeAndCount
-    std::pair<unsigned int, unsigned int> xLimits;
-    std::pair<unsigned int, unsigned int> yLimits;
-    std::pair<unsigned int, unsigned int> zLimits;
+    std::pair<unsigned int, unsigned int> m_xLimits;
+    std::pair<unsigned int, unsigned int> m_yLimits;
+    std::pair<unsigned int, unsigned int> m_zLimits;
 
 private:
+    VoxelCore() = default; // don't allow default constructor
+
     // block level transforms
-    unsigned long long getVoxelBlockIndex(unsigned int x, unsigned int y, unsigned int z) const;
+    unsigned int getVoxelBlockIndex(unsigned int x, unsigned int y, unsigned int z) const;
+    unsigned int getVoxelBlockIndex(unsigned int index) const;
 
     BlockType getVoxelBlock(unsigned int x, unsigned int y, unsigned int z) const;
+    BlockType getVoxelBlock(unsigned int index) const;
+
     bool extractBit(unsigned int x, BlockType block) const;
 
     unsigned int getIndexInBlock(unsigned int z) const;
@@ -47,27 +51,26 @@ private:
 
     void clearPaddingBits();
 
-    unsigned long long getSizeInBytes() const;
-
-    template<class Operator> void dilateAndErode(VoxelCore * result, Operator op);
-
+    unsigned int getSizeInBytes() const;
 
 public:
 
     /** Create an empty voxel volume of the specified size */
-    VoxelCore(unsigned int _rows, unsigned int _columns, unsigned int _planes);
+    VoxelCore(unsigned int xDim, unsigned int yDim, unsigned int zDim);
     VoxelCore(const VoxelCore& voxels);
 
     ~VoxelCore();
+
+    void clone(const VoxelCore& other);
 
     // properties
     unsigned int xDimension() const;
     unsigned int yDimension() const;
     unsigned int zDimension() const;
 
-    unsigned long long size() const;
+    unsigned int size() const;
 
-    unsigned long long count() const;
+    unsigned int count() const;
 
     // actions
     void clear(); // sets all voxels false
@@ -78,30 +81,33 @@ public:
     unsigned int getIndex(unsigned int x, unsigned int y, unsigned int z) const;
 
     std::tuple<unsigned int, unsigned int, unsigned int> getXYZ(unsigned int index) const;
+//    Eigen::Vector3i getCoordinates(unsigned int index) const;
 
 
     // accessors
     bool getVoxel(unsigned int index) const;
     bool getVoxel(unsigned int x, unsigned int y, unsigned int z) const;
+//    bool getVoxel(Eigen::Vector3i coordinate) const;
     bool operator[](unsigned int index) const;
 
     void setVoxel(unsigned int index, bool value);
     void setVoxel(unsigned int x, unsigned int y, unsigned int z, bool value);
+//    void setVoxel(Eigen::Vector3i coordinate, bool value);
 
 
     // boolean
 
     bool isEqual(const VoxelCore& other) const;
 
-    void subtract(const VoxelCore& other);
-    void merge(const VoxelCore& other); // union is a keyword
-    void intersect(const VoxelCore& other);
-    void invert();
+    void operationSubtract(const VoxelCore& other);
+    void operationUnion(const VoxelCore& other);
+    void operationIntersect(const VoxelCore& other);
+    void operationInvert();
 
 
-    void getBoundingRangeAndCount();
-    void dilate(VoxelCore* v);
-    void erode(VoxelCore* v);
+    unsigned int getBoundingRangeAndCount();
+    void operationDilate(VoxelCore* result) const;
+    void operationErode(VoxelCore* result) const;
 
 
     unsigned int getMinX() const;
@@ -110,69 +116,8 @@ public:
     unsigned int getMaxY() const;
     unsigned int getMinZ() const;
     unsigned int getMaxZ() const;
+    void setBounds(unsigned int minX, unsigned int maxX, unsigned int minY, unsigned int maxY, unsigned int minZ, unsigned int maxZ);
 
-/*
-
-
-    VoxelsPacked *dilate(unsigned char region) {
-
-        auto *rtv = new VoxelsPacked(rows, cols, planes);
-
-        unsigned int colsTimesRows = words_per_plane * cols;
-        WORD *v = voxels;
-        WORD *v2 = rtv->voxels;
-
-        for (unsigned int x = 0; x < cols; x++) {
-            for (unsigned int y = 0; y < rows; y++) {
-                for (unsigned int z = 0; z < words_per_plane; z++) {
-                    // planes is scanline
-                    WORD original_value = *v;
-                    WORD value = original_value;
-
-                    {
-                        unsigned long shifted_right = original_value >> 1; // add low bit of prior word as well
-                        if (z > 0) {
-                            WORD v2 = *(v - 1);
-                            v2 = v2 << (bits_per_word-1);
-                            shifted_right = shifted_right | v2;
-                        }
-                        value |= shifted_right;
-                    }
-                    {
-                        unsigned long shifted_left = original_value << 1; // add high bit of next word as well
-                        if (z + 1 < words_per_plane) {
-                            WORD v2 = *(v + 1);
-                            v2 = v2 >> (bits_per_word-1);
-                            shifted_left = shifted_left | v2;
-                        }
-                        value |= shifted_left;
-                    }
-                    if (y >= 1) {
-                        WORD v2 = *(v - words_per_plane);
-                        value |= v2;
-                    }
-                    if (y + 1 < rows) {
-                        WORD v2 = *(v + words_per_plane);
-                        value |= v2;
-                    }
-                    if (x >= 1) {
-                        WORD v2 = *(v - colsTimesRows);
-                        value |= v2;
-                    }
-                    if (x + 1 < cols) {
-                        WORD v2 = *(v + colsTimesRows);
-                        value |= v2;
-                    }
-                    *v2 = value;
-                    v++;
-                    v2++;
-                }
-            }
-        }
-
-        return rtv;
-    }
-*/
 };
 
 #endif //_voxelcore_h

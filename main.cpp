@@ -13,6 +13,10 @@
 double TestVoxels8_Subtract(int size, int iterations) {
     Voxels8 a(size, size, size);
     Voxels8 b(size, size, size);
+    for (int i = 0; i < a.bytes(); i++) {
+        a.setVoxel(i, i%2);
+        b.setVoxel(i, i%2);
+    }
     Timer timer;
 
     for (int i=0; i< iterations; i++) {
@@ -151,10 +155,14 @@ double TestVoxelsVecSlow_Subtract(int size, int iterations) {
 double TestVoxelCore_Subtract(int size, int iterations) {
     VoxelCore a(size, size, size);
     VoxelCore b(size, size, size);
+    for (int i = 0; i < a.size(); i++) {
+        a.setVoxel(i, i%2);
+        b.setVoxel(i, i%2);
+    }
     Timer timer;
 
     for (int i=0; i< iterations; i++) {
-        a.subtract(b);
+        a.operationSubtract(b);
     }
     return timer.elapsed();
 }
@@ -162,10 +170,14 @@ double TestVoxelCore_Subtract(int size, int iterations) {
 double TestVoxelCore_SlowSubtract(int size, int iterations) {
     VoxelCore a(size, size, size);
     VoxelCore b(size, size, size);
+    for (int i = 0; i < a.size(); i++) {
+        a.setVoxel(i, i%2);
+        b.setVoxel(i, i%2);
+    }
     Timer timer;
 
-    for (int i=0; i< a.size(); i++) {
-        a.setVoxel(i, a[i] & !b[i]);
+    for (unsigned int i=0; i< a.size(); i++) {
+        a.setVoxel(i, a[i] && !b[i]);
     }
     return timer.elapsed();
 }
@@ -182,8 +194,8 @@ void run_test(const std::string message, double (*func1)(int, int), double (*fun
 }
 
 int main() {
-    int size = 256;
-    int iterations = 10;
+    int size = 128;
+    int iterations = 20;
 
 
     std::cout << "COMPARE" << std::endl;
